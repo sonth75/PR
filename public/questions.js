@@ -2,10 +2,10 @@ const questions = [
   {
     id: 1,
     type: "Blurred Logo",
-    question: "ข้อที่ 1: โลโก้แบรนด์เสื้อผ้าสปอร์ตแวร์นี้คือแบรนด์ใด?",
-    hint: "https://placehold.co/400x250/000000/FFFFFF?text=Swoosh+Blurred", // ใส่ URL รูปภาพจริง
+    question: "ข้อที่ 1: โลโก้แบรนด์นี้คือแบรนด์ใด?",
+    hint: "/images/Nike-Logo.jpg", // ✅ เรียกใช้ไฟล์รูปภาพภายในโฟลเดอร์ public
     options: ["Adidas", "Nike", "Puma", "Under Armour"],
-    answer: 1, // ดัชนีตัวเลือกที่ถูกต้อง (0 = Adidas, 1 = Nike...)
+    answer: 1,
     timeLimit: 15
   },
   {
