@@ -96,7 +96,17 @@
         container.appendChild(btn);
       });
     });
-
+  // เพิ่ม Event Listener นี้ใน index.html
+    socket.on('questionClosed', (data) => {
+      document.getElementById('gameSection').classList.add('hidden');
+      document.getElementById('resultSection').classList.remove('hidden');
+    
+      // ถ้าผู้เล่นยังไม่ได้ตอบคำถามข้อนี้
+      if (!myData.answeredCurrentQuestion) {
+        document.getElementById('resultMsg').innerText = '⏰ หมดเวลา! คุณไม่ได้ส่งคำตอบ';
+        document.getElementById('resultMsg').style.color = '#ff4757';
+      }
+    });
     socket.on('answerResult', (res) => {
       document.getElementById('gameSection').classList.add('hidden');
       document.getElementById('resultSection').classList.remove('hidden');
