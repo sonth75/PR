@@ -19,9 +19,11 @@
   
   <div class="container">
     <div class="main-panel">
-      <button onclick="nextQuestion()">▶ เปิดคำถามข้อต่อไป</button>
-      <button onclick="closeQuestion()" style="background: #ef4444;">⏹ จบเวลาข้อนี้</button>
-
+      <button id="nextBtn" onclick="nextQuestion()">▶ เปิดคำถามข้อต่อไป</button>
+      <button id="closeBtn" onclick="closeQuestion()" style="background: #ef4444;">⏹ จบเวลาข้อนี้</button>
+      <!-- เพิ่มปุ่ม Reset -->
+      <button id="resetBtn" onclick="resetGame()" style="background-color: #ef4444; color: white;">🔄 Reset เริ่มเกมใหม่</button>
+     
       <div id="hostQuestionDisplay" style="margin-top: 20px;">
         <h3>กด "เปิดคำถามข้อต่อไป" เพื่อเริ่มเกม</h3>
       </div>
