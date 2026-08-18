@@ -3,7 +3,7 @@ const questions = [
     id: 1,
     type: "Blurred Logo",
     question: "ข้อที่ 1: โลโก้แบรนด์เสื้อผ้าสปอร์ตแวร์นี้คือแบรนด์ใด?",
-    hint: "https://via.placeholder.com/400x250/000000/FFFFFF?text=Swoosh+Blurred", // ใส่ URL รูปภาพจริง
+    hint: "https://www.bing.com/images/search?view=detailV2&ccid=4X9pVZ8v&id=EC746F9DBF1E27EF4AF1F84B4E1ECE322FF8642E&thid=OIP.4X9pVZ8v1WnLq9jMZCrDIQHaFG&mediaurl=https%3A%2F%2Ft4.ftcdn.net%2Fjpg%2F03%2F22%2F56%2F97%2F360_F_322569705_TXxSknpnRx3E0aM0gIscDgjmFrUuazkt.jpg&cdnurl=https%3A%2F%2Fth.bing.com%2Fth%2Fid%2FR.e17f69559f2fd569cbabd8cc642ac321%3Frik%3DLmT4LzLOHk5L%252bA%26pid%3DImgRaw%26r%3D0&exph=360&expw=522&q=%E0%B8%A0%E0%B8%B2%E0%B8%9E+Nike&mode=overlay&ck=3EC4B736E465AF2DF2198163FDC8F124&selectedIndex=0&idpp=serp&ajaxhist=0&ajaxserp=0&shtc=0&shth=OIP.4X9pVZ8v1WnLq9jMZCrDIQHaFG&shsc=idp&form=EX0050&shid=b2c1cba7-8428-4fd6-8ae2-0c67fb7f0906&shtp=GetUrl&shtk=4Lij4Li54Lib4Lig4Liy4LieTmlrZSDigJMg4LmA4Lil4Li34Lit4LiB4LiU4Li54Lig4Liy4Lie4LiW4LmI4Liy4Lii4Liq4LiV4LmH4Lit4LiBIOC5gOC4p%2BC4geC5gOC4leC4reC4o%2BC5jCDguYHguKXguLDguKfguLTguJTguLXguYLguK0yMiw2NDAgfCBBZG9iZSBTdG9jaw%3D%3D&shdk=Rm91bmQgb24gQmluZyBmcm9tIHN0b2NrLmFkb2JlLmNvbQ%3D%3D&shhk=zFeqg1ymqRFyixKwGrnnsML9NGBb81NPc7SMBrbmahI%3D?text=Swoosh+Blurred", // ใส่ URL รูปภาพจริง
     options: ["Adidas", "Nike", "Puma", "Under Armour"],
     answer: 1, // ดัชนีตัวเลือกที่ถูกต้อง (0 = Adidas, 1 = Nike...)
     timeLimit: 15
