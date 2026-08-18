@@ -21,7 +21,7 @@ const questions = [
     id: 3,
     type: "Zoom In",
     question: "ข้อที่ 3: ภาพซูมขยายส่วนนี้คือโลโก้ของแบรนด์เทคโนโลยีใด?",
-    hint: "https://via.placeholder.com/400x250/333333/FFFFFF?text=Bitten+Apple+Zoom",
+    hint: "https://placehold.co/400x250/333333/FFFFFF?text=Bitten+Apple+Zoom",
     options: ["Apple", "Samsung", "Xiaomi", "Huawei"],
     answer: 0,
     timeLimit: 12
@@ -30,7 +30,7 @@ const questions = [
     id: 4,
     type: "Color Palette",
     question: "ข้อที่ 4: ธีมสี 'แดง - เหลือง' นี้เป็นเอกลักษณ์ของแบรนด์ใด?",
-    hint: "https://via.placeholder.com/400x250/DA291C/FFC72C?text=Red+%26+Yellow",
+    hint: "https://placehold.co/400x250/DA291C/FFC72C?text=Red+%26+Yellow",
     options: ["KFC", "McDonald's", "Burger King", "Pizza Hut"],
     answer: 1,
     timeLimit: 10
@@ -39,7 +39,7 @@ const questions = [
     id: 5,
     type: "Mascot Silhouette",
     question: "ข้อที่ 5: เงารูปมาสคอตเด็กผู้หญิงผมเปียนี้คือแบรนด์ใด?",
-    hint: "https://via.placeholder.com/400x250/111111/FFFFFF?text=Girl+Silhouette",
+    hint: "https://placehold.co/400x250/111111/FFFFFF?text=Girl+Silhouette",
     options: ["Wendy's", "Dairy Queen", "Starbucks", "Chupa Chups"],
     answer: 0,
     timeLimit: 12
@@ -48,7 +48,7 @@ const questions = [
     id: 6,
     type: "Product Shape",
     question: "ข้อที่ 6: เงารูปทรงขวดแก้วอันเป็นเอกลักษณ์นี้คือเครื่องดื่มใด?",
-    hint: "https://via.placeholder.com/400x250/222222/FFFFFF?text=Contour+Bottle",
+    hint: "https://placehold.co/400x250/222222/FFFFFF?text=Contour+Bottle",
     options: ["Pepsi", "Est Cola", "Coca-Cola", "Sprite"],
     answer: 2,
     timeLimit: 12
