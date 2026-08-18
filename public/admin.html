@@ -5,27 +5,42 @@
   <title>Host Dashboard - Brand Speed Master</title>
   <script src="/socket.io/socket.io.js"></script>
   <style>
-    body { font-family: Arial, sans-serif; background: #0f172a; color: #fff; padding: 30px; }
-    .container { display: flex; gap: 20px; }
-    .main-panel { flex: 2; background: #1e293b; padding: 20px; border-radius: 10px; }
-    .side-panel { flex: 1; background: #334155; padding: 20px; border-radius: 10px; }
-    button { padding: 15px 25px; font-size: 18px; border: none; border-radius: 8px; cursor: pointer; background: #3b82f6; color: white; margin-right: 10px; }
-    ol { font-size: 20px; line-height: 1.8; }
+    * { box-sizing: border-box; }
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0f172a; color: #fff; padding: 24px; margin: 0; }
+    h1 { margin-top: 0; color: #38bdf8; }
+    .container { display: flex; gap: 24px; }
+    .main-panel { flex: 2; background: #1e293b; padding: 24px; border-radius: 12px; border: 1px solid #334155; }
+    .side-panel { flex: 1; background: #1e293b; padding: 24px; border-radius: 12px; border: 1px solid #334155; }
+    button { padding: 14px 20px; font-size: 16px; font-weight: bold; border: none; border-radius: 8px; cursor: pointer; margin-right: 10px; margin-bottom: 10px; transition: 0.2s; }
+    button:hover { opacity: 0.9; }
+    .btn-next { background: #3b82f6; color: white; }
+    .btn-auto { background: #10b981; color: white; }
+    .btn-stop { background: #f59e0b; color: white; }
+    .btn-close { background: #ef4444; color: white; }
+    .btn-reset { background: #64748b; color: white; }
+    ol { font-size: 18px; line-height: 1.8; padding-left: 24px; }
+    li { margin-bottom: 8px; }
+    .badge-count { background: #22c55e; color: #000; padding: 4px 12px; border-radius: 20px; font-weight: bold; }
+    .auto-badge { background: #10b981; color: #fff; padding: 4px 10px; border-radius: 6px; font-size: 14px; margin-left: 10px; }
   </style>
 </head>
 <body>
-  <h1>🎬 Host Dashboard (Brand Speed Master)</h1>
-  <p>จำนวนผู้เล่นปัจจุบัน: <b id="playerCount" style="color: #4ade80; font-size: 24px;">0</b> / 100 คน</p>
-  
+  <h1>🎬 Host Dashboard <span id="autoIndicator" class="auto-badge hidden">🤖 Auto Mode Running</span></h1>
+  <p>จำนวนผู้เล่นปัจจุบัน: <span class="badge-count" id="playerCount">0</span> / 100 คน</p>
+
   <div class="container">
     <div class="main-panel">
-      <button id="nextBtn" onclick="nextQuestion()">▶ เปิดคำถามข้อต่อไป</button>
-      <button id="closeBtn" onclick="closeQuestion()" style="background: #ef4444;">⏹ จบเวลาข้อนี้</button>
-      <!-- เพิ่มปุ่ม Reset -->
-      <button id="resetBtn" onclick="resetGame()" style="background-color: #ef4444; color: white;">🔄 Reset เริ่มเกมใหม่</button>
-     
-      <div id="hostQuestionDisplay" style="margin-top: 20px;">
-        <h3>กด "เปิดคำถามข้อต่อไป" เพื่อเริ่มเกม</h3>
+      <div>
+        <button class="btn-auto" onclick="startAuto()">▶️ เริ่มโหมดอัตโนมัติ (Auto)</button>
+        <button class="btn-stop" onclick="stopAuto()">⏸️ หยุดโหมด Auto</button>
+        <hr style="border-color: #334155; margin: 15px 0;">
+        <button class="btn-next" onclick="nextQuestion()">▶️ เปิดคำถามถัดไป (Manual)</button>
+        <button class="btn-close" onclick="closeQuestion()">⏹ จบเวลาข้อนี้</button>
+        <button class="btn-reset" onclick="resetGame()">🔄 Reset เริ่มเกมใหม่</button>
+      </div>
+
+      <div id="hostQuestionDisplay" style="margin-top: 24px; padding: 20px; background: #0f172a; border-radius: 8px;">
+        <h3>กด "เริ่มโหมดอัตโนมัติ" หรือ "เปิดคำถามถัดไป" เพื่อเริ่มเกม</h3>
       </div>
     </div>
 
@@ -38,6 +53,14 @@
   <script>
     const socket = io();
 
+    function startAuto() {
+      socket.emit('adminStartAuto');
+    }
+
+    function stopAuto() {
+      socket.emit('adminStopAuto');
+    }
+
     function nextQuestion() {
       socket.emit('adminNextQuestion');
     }
@@ -45,36 +68,44 @@
     function closeQuestion() {
       socket.emit('adminCloseQuestion');
     }
+
     function resetGame() {
-      if (confirm("คุณแน่ใจหรือไม่ว่าต้องการ Reset คะแนนและเริ่มเกมใหม่ตั้งแต่ข้อแรก?")) {
+      if (confirm('คุณแน่ใจหรือไม่ว่าต้องการ Reset คะแนนและเริ่มเกมใหม่ตั้งแต่ข้อแรก?')) {
         socket.emit('adminResetGame');
-        document.getElementById('hostQuestionDisplay').innerHTML = '<p>🔄 รีเซ็ตเกมเรียบร้อยแล้ว พร้อมสำหรับเริ่มรอบใหม่</p>';
+        document.getElementById('hostQuestionDisplay').innerHTML = '<h3>🔄 รีเซ็ตเกมเรียบร้อยแล้ว พร้อมสำหรับเริ่มรอบใหม่</h3>';
       }
     }
-    
+
+    socket.on('autoStatusChange', (isRunning) => {
+      const badge = document.getElementById('autoIndicator');
+      if (isRunning) badge.classList.remove('hidden');
+      else badge.classList.add('hidden');
+    });
+
     socket.on('updatePlayerCount', (count) => {
       document.getElementById('playerCount').innerText = count;
     });
-    // เพิ่มการรับ Event สรุปผลบนหน้า Admin
-    socket.on('questionClosed', (data) => {
-      document.getElementById('hostQuestionDisplay').innerHTML += `
-        <h3 style="color: #ef4444;">⏹ ปิดการรับคำตอบข้อนี้แล้ว!</h3>
-        <p>เฉลยข้อที่ถูกต้องคือตัวเลือกที่: <b>${data.correctAnswer + 1}</b></p>
-      `;
-    });
+
     socket.on('newQuestion', (q) => {
       document.getElementById('hostQuestionDisplay').innerHTML = `
-        <h2>ข้อที่ ${q.questionIndex}: ${q.question}</h2>
-        <p>เวลา: ${q.timeLimit} วินาที</p>
+        <h2 style="color: #38bdf8;">ข้อที่ ${q.questionIndex}/${q.totalQuestions}: ${q.question}</h2>
+        <p>เวลาต่อข้อ: <b>${q.timeLimit} วินาที</b></p>
         <ul>
-          ${q.options.map(opt => `<li>${opt}</li>`).join('')}
+          ${q.options.map((opt, idx) => `<li>ตัวเลือก ${idx + 1}: ${opt}</li>`).join('')}
         </ul>
+      `;
+    });
+
+    socket.on('questionClosed', (data) => {
+      document.getElementById('hostQuestionDisplay').innerHTML += `
+        <h3 style="color: #ef4444; margin-top: 20px;">⏹ ปิดการรับคำตอบข้อนี้แล้ว</h3>
+        <p style="color: #4ade80;">เฉลยข้อที่ถูกต้อง: <b>${data.correctOptionText}</b></p>
       `;
     });
 
     socket.on('updateLeaderboard', (topPlayers) => {
       const list = document.getElementById('leaderboardList');
-      list.innerHTML = topPlayers.map(p => `<li>${p.name}: <b>${p.score}</b> คะแนน</li>`).join('');
+      list.innerHTML = topPlayers.map(p => `<li>${p.name}: <b style="color: #38bdf8;">${p.score}</b> คะแนน</li>`).join('');
     });
   </script>
 </body>
