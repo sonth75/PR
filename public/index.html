@@ -54,12 +54,25 @@
   <script>
     const socket = io();
     let myData = {};
-
+    let currentTimer = null; // เพิ่มตัวแปรเก็บ Timer
+    
     function join() {
       const name = document.getElementById('username').value.trim();
       if (name) socket.emit('joinGame', name);
     }
+      // ฟังก์ชันส่วนกลางสำหรับการปิดข้อ
+  function closeQuestionLogic() {
+    if (!isQuestionActive) return;
+    isQuestionActive = false;
 
+    const currentQ = questions[currentQuestionIndex];
+    
+    // ส่งสัญญาณบอกผู้เล่นทุกคนว่าปิดข้อนี้แล้ว พร้อมส่งเฉลย
+    io.emit('questionClosed', { 
+      correctAnswer: currentQ.answer, 
+      leaderboard: getLeaderboard() 
+    });
+  }
     socket.on('joinedSuccess', (player) => {
       myData = player;
       document.getElementById('displayName').innerText = player.name;
@@ -107,6 +120,49 @@
         document.getElementById('resultMsg').style.color = '#ff4757';
       }
     });
+    // เมื่อ Host กดเปิดคำถามข้อต่อไป
+  socket.on('adminNextQuestion', () => {
+    currentQuestionIndex++;
+    if (currentQuestionIndex < questions.length) {
+      const q = questions[currentQuestionIndex];
+      
+      // Reset สถานะผู้เล่น
+      Object.keys(players).forEach(id => {
+        players[id].answeredCurrentQuestion = false;
+      });
+
+      questionStartTime = Date.now();
+      isQuestionActive = true;
+
+      // ล้าง Timer เก่า (ถ้ามี)
+      if (currentTimer) clearTimeout(currentTimer);
+
+      // ส่งคำถามให้ทุกคน
+      io.emit('newQuestion', {
+        questionIndex: currentQuestionIndex + 1,
+        totalQuestions: questions.length,
+        question: q.question,
+        hint: q.hint,
+        options: q.options,
+        timeLimit: q.timeLimit
+      });
+
+      // ตั้งเวลาปิดข้ออัตโนมัติเมื่อหมดเวลา (Auto-close)
+      currentTimer = setTimeout(() => {
+        closeQuestionLogic();
+      }, q.timeLimit * 1000);
+
+    } else {
+      io.emit('gameOver', getLeaderboard());
+    }
+  });
+
+  // เมื่อ Host กดปุ่ม "⏹ จบเวลาข้อนี้" เองด้วยมือ
+  socket.on('adminCloseQuestion', () => {
+    if (currentTimer) clearTimeout(currentTimer); // ยกเลิกเวลาถอยหลัง
+    closeQuestionLogic();
+  });
+
     socket.on('answerResult', (res) => {
       document.getElementById('gameSection').classList.add('hidden');
       document.getElementById('resultSection').classList.remove('hidden');
