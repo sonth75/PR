@@ -61,9 +61,9 @@
       if (name) socket.emit('joinGame', name);
     }
       // ฟังก์ชันส่วนกลางสำหรับการปิดข้อ
-  function closeQuestionLogic() {
-    if (!isQuestionActive) return;
-    isQuestionActive = false;
+    function closeQuestionLogic() {
+      if (!isQuestionActive) return;
+      isQuestionActive = false;
 
     const currentQ = questions[currentQuestionIndex];
     
@@ -73,6 +73,21 @@
       leaderboard: getLeaderboard() 
     });
   }
+    // เพิ่ม Event Listener รับสัญญาณรีเซ็ตเกม
+      socket.on('gameReset', () => {
+        // รีเซ็ตข้อมูลฝั่ง Client
+        myData.score = 0;
+        myData.answeredCurrentQuestion = false;
+      
+        // ซ่อนหน้าจอคำถาม/ผลลัพธ์ แล้วกลับไปแสดงหน้ารอเริ่มเกม (Waiting Room)
+        document.getElementById('gameSection').classList.add('hidden');
+        document.getElementById('resultSection').classList.add('hidden');
+        document.getElementById('waitingSection').classList.remove('hidden');
+      
+        // แจ้งเตือนผู้เล่น
+        alert('🔄 Host ได้ทำการ Reset เกมแล้ว เตรียมพร้อมสำหรับรอบใหม่!');
+      });
+    
     socket.on('joinedSuccess', (player) => {
       myData = player;
       document.getElementById('displayName').innerText = player.name;
