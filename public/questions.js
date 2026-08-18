@@ -2,8 +2,8 @@ const questions = [
   {
     id: 1,
     type: "Blurred Logo",
-    question: "ข้อที่ 1: โลโก้แบรนด์นี้คือแบรนด์ใด?",
-    hint: "/images/Nike-Logo.jpg", // ✅ เรียกใช้ไฟล์รูปภาพภายในโฟลเดอร์ public
+    question: "ข้อที่ 1: โลโก้แบรนด์เสื้อผ้าสปอร์ตแวร์นี้คือแบรนด์ใด?",
+    hint: "https://placehold.co/400x250/000000/FFFFFF?text=Blurred+Logo",
     options: ["Adidas", "Nike", "Puma", "Under Armour"],
     answer: 1,
     timeLimit: 15
@@ -21,7 +21,7 @@ const questions = [
     id: 3,
     type: "Zoom In",
     question: "ข้อที่ 3: ภาพซูมขยายส่วนนี้คือโลโก้ของแบรนด์เทคโนโลยีใด?",
-    hint: "https://placehold.co/400x250/333333/FFFFFF?text=Bitten+Apple+Zoom",
+    hint: "https://placehold.co/400x250/333333/FFFFFF?text=Apple+Zoom",
     options: ["Apple", "Samsung", "Xiaomi", "Huawei"],
     answer: 0,
     timeLimit: 12
