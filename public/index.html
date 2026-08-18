@@ -8,20 +8,25 @@
   <style>
     * { box-sizing: border-box; }
     body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0f172a; color: #fff; text-align: center; margin: 0; padding: 20px; }
-    .card { background: #1e293b; padding: 24px; border-radius: 16px; max-width: 420px; margin: 0 auto; box-shadow: 0 8px 24px rgba(0,0,0,0.4); border: 1px solid #334155; }
+    .card { background: #1e293b; padding: 24px; border-radius: 16px; max-width: 450px; margin: 0 auto; box-shadow: 0 8px 24px rgba(0,0,0,0.4); border: 1px solid #334155; }
     input, button { width: 100%; padding: 14px; margin: 10px 0; border-radius: 10px; border: none; font-size: 16px; font-weight: bold; }
     input { background: #334155; color: #fff; text-align: center; }
-    input::placeholder { color: #94a3b8; }
     button { background: #ef4444; color: white; cursor: pointer; transition: 0.2s; }
-    button:active { transform: scale(0.98); }
-    .option-btn { margin: 8px 0; font-size: 18px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.2); }
+    .option-btn { margin: 8px 0; font-size: 18px; border-radius: 12px; }
     .option-btn:nth-child(1) { background: #ef4444; }
     .option-btn:nth-child(2) { background: #3b82f6; }
     .option-btn:nth-child(3) { background: #eab308; color: #000; }
     .option-btn:nth-child(4) { background: #22c55e; }
     #questionImg { max-width: 100%; height: auto; border-radius: 10px; margin: 12px 0; border: 2px solid #475569; }
     .hidden { display: none !important; }
-    .badge { background: #3b82f6; padding: 4px 12px; border-radius: 20px; font-size: 14px; font-weight: normal; }
+    .badge { background: #3b82f6; padding: 4px 12px; border-radius: 20px; font-size: 14px; }
+    
+    /* สไตล์สำหรับตารางสรุปผล */
+    .ranking-table { width: 100%; border-collapse: collapse; margin-top: 16px; font-size: 15px; }
+    .ranking-table th { background: #334155; color: #38bdf8; padding: 10px; border-bottom: 2px solid #475569; }
+    .ranking-table td { padding: 10px; border-bottom: 1px solid #334155; }
+    .my-rank-row { background: #0284c7 !important; color: #ffffff !important; font-weight: bold; border-radius: 8px; font-size: 17px; }
+    .winner-row { color: #facc15; font-weight: bold; }
   </style>
 </head>
 <body>
@@ -48,7 +53,6 @@
     <div id="gameSection" class="hidden">
       <div style="display: flex; justify-content: space-between; align-items: center;">
         <span class="badge" id="qBadge">ข้อที่ 1/10</span>
-        <span id="timerText" style="color: #f43f5e; font-weight: bold;"></span>
       </div>
       <h3 id="qText" style="margin: 16px 0; font-size: 20px;"></h3>
       <img id="questionImg" src="" class="hidden">
@@ -62,11 +66,29 @@
       <hr style="border-color: #334155; margin: 20px 0;">
       <p>คะแนนรวมสะสม: <b id="totalScoreText" style="color: #4ade80; font-size: 24px;">0</b></p>
     </div>
+
+    <!-- Game Over & Full Leaderboard View -->
+    <div id="gameOverSection" class="hidden">
+      <h2 style="color: #facc15;">🏁 จบการแข่งขัน!</h2>
+      <p style="color: #94a3b8;">ตารางสรุปอันดับผู้เล่นทั้งหมด</p>
+      <div style="max-height: 320px; overflow-y: auto;">
+        <table class="ranking-table">
+          <thead>
+            <tr>
+              <th>อันดับ</th>
+              <th>ชื่อผู้เล่น</th>
+              <th>คะแนน</th>
+            </tr>
+          </thead>
+          <tbody id="fullRankingBody"></tbody>
+        </table>
+      </div>
+    </div>
   </div>
 
   <script>
     const socket = io();
-    let myData = { score: 0, answeredCurrentQuestion: false };
+    let myData = { id: '', name: '', score: 0, answeredCurrentQuestion: false };
 
     function join() {
       const name = document.getElementById('username').value.trim();
@@ -86,9 +108,10 @@
       myData.answeredCurrentQuestion = false;
       document.getElementById('waitSection').classList.add('hidden');
       document.getElementById('resultSection').classList.add('hidden');
+      document.getElementById('gameOverSection').classList.add('hidden');
       document.getElementById('gameSection').classList.remove('hidden');
 
-      document.getElementById('qBadge').innerText = `ข้อที่ ${q.questionIndex} /${q.totalQuestions}`;
+      document.getElementById('qBadge').innerText = `ข้อที่ ${q.questionIndex} / ${q.totalQuestions}`;
       document.getElementById('qText').innerText = q.question;
 
       const img = document.getElementById('questionImg');
@@ -144,12 +167,47 @@
       document.getElementById('correctAnswerText').innerText = `เฉลย: ${data.correctOptionText}`;
     });
 
+    // เมื่อจบเกม แสดงสรุปอันดับผู้เล่นทั้งหมด
+    socket.on('gameOver', (allPlayers) => {
+      document.getElementById('gameSection').classList.add('hidden');
+      document.getElementById('resultSection').classList.add('hidden');
+      document.getElementById('waitSection').classList.add('hidden');
+      document.getElementById('gameOverSection').classList.remove('hidden');
+
+      const tbody = document.getElementById('fullRankingBody');
+      tbody.innerHTML = '';
+
+      allPlayers.forEach((p, index) => {
+        const tr = document.createElement('tr');
+        const isMe = p.id === myData.id;
+        const isWinner = index === 0;
+
+        // ทำตัวหนาและเปลี่ยนสีหากเป็นแถบของตัวเอง
+        if (isMe) {
+          tr.className = 'my-rank-row';
+        } else if (isWinner) {
+          tr.className = 'winner-row';
+        }
+
+        const rankDisplay = isWinner ? '🏆 1' : index + 1;
+        const nameDisplay = isMe ? `<b>${p.name} (คุณ)</b>` : p.name;
+
+        tr.innerHTML = `
+          <td>${rankDisplay}</td>
+          <td>${nameDisplay}</td>
+          <td><b>${p.score}</b></td>
+        `;
+        tbody.appendChild(tr);
+      });
+    });
+
     socket.on('gameReset', () => {
       myData.score = 0;
       myData.answeredCurrentQuestion = false;
       document.getElementById('myScore').innerText = '0';
       document.getElementById('gameSection').classList.add('hidden');
       document.getElementById('resultSection').classList.add('hidden');
+      document.getElementById('gameOverSection').classList.add('hidden');
       document.getElementById('waitSection').classList.remove('hidden');
       alert('🔄 Host ได้สั่ง Reset เริ่มเกมใหม่!');
     });
