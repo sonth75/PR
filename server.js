@@ -97,6 +97,27 @@ io.on('connection', (socket) => {
     io.emit('updatePlayerCount', Object.keys(players).length);
     io.emit('updateLeaderboard', getLeaderboard());
   });
+  
+});
+
+// เพิ่มการรับ Event เมื่อ Host กด Reset
+socket.on('adminResetGame', () => {
+  // 1. รีเซ็ตสถานะเกม
+  currentQuestionIndex = -1;
+  isQuestionActive = false;
+  if (currentTimer) clearTimeout(currentTimer);
+
+  // 2. รีเซ็ตคะแนนและสถานะของผู้เล่นทุกคน
+  Object.keys(players).forEach(id => {
+    players[id].score = 0;
+    players[id].answeredCurrentQuestion = false;
+  });
+
+  // 3. กระจายสัญญาณแจ้งผู้เล่นทุกคนว่าเริ่มเกมใหม่แล้ว
+  io.emit('gameReset');
+
+  // 4. อัปเดตรายชื่อผู้เล่นและตารางคะแนนบนหน้า Admin
+  io.emit('playerListUpdate', getLeaderboard());
 });
 
 function getLeaderboard() {
