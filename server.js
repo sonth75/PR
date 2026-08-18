@@ -6,10 +6,7 @@ const questions = require('./public/questions');
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
-  cors: {
-    origin: "*",
-    methods: ["GET", "POST"]
-  }
+  cors: { origin: "*", methods: ["GET", "POST"] }
 });
 
 app.use(express.static('public'));
@@ -19,15 +16,13 @@ let currentQuestionIndex = -1;
 let questionStartTime = 0;
 let isQuestionActive = false;
 let currentTimer = null;
+let isAutoMode = false;
+let autoNextTimer = null;
 
 io.on('connection', (socket) => {
-  console.log('User connected:', socket.id);
-
-  // ส่งข้อมูลเริ่มต้นเมื่อมี Client เชื่อมต่อ
   socket.emit('updatePlayerCount', Object.keys(players).length);
   socket.emit('updateLeaderboard', getLeaderboard());
 
-  // ผู้เล่นลงทะเบียนเข้าร่วม
   socket.on('joinGame', (playerName) => {
     if (Object.keys(players).length >= 100) {
       socket.emit('errorMsg', 'ห้องเต็มแล้ว (จำกัดไม่เกิน 100 คน)');
@@ -46,13 +41,32 @@ io.on('connection', (socket) => {
     io.emit('updateLeaderboard', getLeaderboard());
   });
 
-  // Host กดเปิดคำถามข้อต่อไป
+  // เริ่มโหมด Auto
+  socket.on('adminStartAuto', () => {
+    isAutoMode = true;
+    io.emit('autoStatusChange', true);
+    triggerNextQuestion();
+  });
+
+  // หยุดโหมด Auto
+  socket.on('adminStopAuto', () => {
+    isAutoMode = false;
+    if (autoNextTimer) clearTimeout(autoNextTimer);
+    io.emit('autoStatusChange', false);
+  });
+
+  // Host กดเปิดคำถามข้อต่อไปด้วยมือ
   socket.on('adminNextQuestion', () => {
+    triggerNextQuestion();
+  });
+
+  function triggerNextQuestion() {
+    if (autoNextTimer) clearTimeout(autoNextTimer);
     currentQuestionIndex++;
+
     if (currentQuestionIndex < questions.length) {
       const q = questions[currentQuestionIndex];
 
-      // รีเซ็ตสถานะการตอบของผู้เล่นทุกคน
       Object.keys(players).forEach(id => {
         players[id].answeredCurrentQuestion = false;
       });
@@ -72,17 +86,18 @@ io.on('connection', (socket) => {
         timeLimit: q.timeLimit
       });
 
-      // ตั้ง Timer ปิดคำถามอัตโนมัติเมื่อหมดเวลา
+      // ตั้ง Timer ปิดคำถาม
       currentTimer = setTimeout(() => {
         closeQuestionLogic();
       }, q.timeLimit * 1000);
 
     } else {
-      io.emit('gameOver', getLeaderboard());
+      isAutoMode = false;
+      io.emit('autoStatusChange', false);
+      io.emit('gameOver', getAllPlayersRanking());
     }
-  });
+  }
 
-  // ผู้เล่นส่งคำตอบ
   socket.on('submitAnswer', (optionIndex) => {
     const player = players[socket.id];
     if (!player || !isQuestionActive || player.answeredCurrentQuestion) return;
@@ -103,17 +118,17 @@ io.on('connection', (socket) => {
     io.emit('updateLeaderboard', getLeaderboard());
   });
 
-  // Host กดสั่งจบเวลาข้อนี้ด้วยมือ
   socket.on('adminCloseQuestion', () => {
     if (currentTimer) clearTimeout(currentTimer);
     closeQuestionLogic();
   });
 
-  // Host กด Reset เริ่มเกมใหม่
   socket.on('adminResetGame', () => {
     currentQuestionIndex = -1;
     isQuestionActive = false;
+    isAutoMode = false;
     if (currentTimer) clearTimeout(currentTimer);
+    if (autoNextTimer) clearTimeout(autoNextTimer);
 
     Object.keys(players).forEach(id => {
       players[id].score = 0;
@@ -121,6 +136,7 @@ io.on('connection', (socket) => {
     });
 
     io.emit('gameReset');
+    io.emit('autoStatusChange', false);
     io.emit('updateLeaderboard', getLeaderboard());
   });
 
@@ -129,24 +145,36 @@ io.on('connection', (socket) => {
     io.emit('updatePlayerCount', Object.keys(players).length);
     io.emit('updateLeaderboard', getLeaderboard());
   });
+
+  function closeQuestionLogic() {
+    if (!isQuestionActive) return;
+    isQuestionActive = false;
+
+    const currentQ = questions[currentQuestionIndex];
+    io.emit('questionClosed', {
+      correctAnswer: currentQ.answer,
+      correctOptionText: currentQ.options[currentQ.answer],
+      leaderboard: getLeaderboard()
+    });
+
+    // หากเปิดโหมด Auto ให้รอ 5 วินาทีแล้วไปข้อต่อไป
+    if (isAutoMode) {
+      autoNextTimer = setTimeout(() => {
+        triggerNextQuestion();
+      }, 5000);
+    }
+  }
 });
-
-function closeQuestionLogic() {
-  if (!isQuestionActive) return;
-  isQuestionActive = false;
-
-  const currentQ = questions[currentQuestionIndex];
-  io.emit('questionClosed', {
-    correctAnswer: currentQ.answer,
-    correctOptionText: currentQ.options[currentQ.answer],
-    leaderboard: getLeaderboard()
-  });
-}
 
 function getLeaderboard() {
   return Object.values(players)
     .sort((a, b) => b.score - a.score)
     .slice(0, 10);
+}
+
+function getAllPlayersRanking() {
+  return Object.values(players)
+    .sort((a, b) => b.score - a.score);
 }
 
 const PORT = process.env.PORT || 3000;
