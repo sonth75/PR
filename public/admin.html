@@ -45,7 +45,13 @@
     function closeQuestion() {
       socket.emit('adminCloseQuestion');
     }
-
+    function resetGame() {
+      if (confirm("คุณแน่ใจหรือไม่ว่าต้องการ Reset คะแนนและเริ่มเกมใหม่ตั้งแต่ข้อแรก?")) {
+        socket.emit('adminResetGame');
+        document.getElementById('hostQuestionDisplay').innerHTML = '<p>🔄 รีเซ็ตเกมเรียบร้อยแล้ว พร้อมสำหรับเริ่มรอบใหม่</p>';
+      }
+    }
+    
     socket.on('updatePlayerCount', (count) => {
       document.getElementById('playerCount').innerText = count;
     });
