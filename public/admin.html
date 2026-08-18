@@ -47,7 +47,13 @@
     socket.on('updatePlayerCount', (count) => {
       document.getElementById('playerCount').innerText = count;
     });
-
+    // เพิ่มการรับ Event สรุปผลบนหน้า Admin
+    socket.on('questionClosed', (data) => {
+      document.getElementById('hostQuestionDisplay').innerHTML += `
+        <h3 style="color: #ef4444;">⏹ ปิดการรับคำตอบข้อนี้แล้ว!</h3>
+        <p>เฉลยข้อที่ถูกต้องคือตัวเลือกที่: <b>${data.correctAnswer + 1}</b></p>
+      `;
+    });
     socket.on('newQuestion', (q) => {
       document.getElementById('hostQuestionDisplay').innerHTML = `
         <h2>ข้อที่ ${q.questionIndex}: ${q.question}</h2>
