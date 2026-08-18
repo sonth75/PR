@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <title>Host Dashboard - Brand Speed Master</title>
+  <script src="/socket.io/socket.io.js"></script>
+  <style>
+    body { font-family: Arial, sans-serif; background: #0f172a; color: #fff; padding: 30px; }
+    .container { display: flex; gap: 20px; }
+    .main-panel { flex: 2; background: #1e293b; padding: 20px; border-radius: 10px; }
+    .side-panel { flex: 1; background: #334155; padding: 20px; border-radius: 10px; }
+    button { padding: 15px 25px; font-size: 18px; border: none; border-radius: 8px; cursor: pointer; background: #3b82f6; color: white; margin-right: 10px; }
+    ol { font-size: 20px; line-height: 1.8; }
+  </style>
+</head>
+<body>
+  <h1>🎬 Host Dashboard (Brand Speed Master)</h1>
+  <p>จำนวนผู้เล่นปัจจุบัน: <b id="playerCount" style="color: #4ade80; font-size: 24px;">0</b> / 100 คน</p>
+  
+  <div class="container">
+    <div class="main-panel">
+      <button onclick="nextQuestion()">▶ เปิดคำถามข้อต่อไป</button>
+      <button onclick="closeQuestion()" style="background: #ef4444;">⏹ จบเวลาข้อนี้</button>
+
+      <div id="hostQuestionDisplay" style="margin-top: 20px;">
+        <h3>กด "เปิดคำถามข้อต่อไป" เพื่อเริ่มเกม</h3>
+      </div>
+    </div>
+
+    <div class="side-panel">
+      <h2>🏆 Leaderboard Top 10</h2>
+      <ol id="leaderboardList"></ol>
+    </div>
+  </div>
+
+  <script>
+    const socket = io();
+
+    function nextQuestion() {
+      socket.emit('adminNextQuestion');
+    }
+
+    function closeQuestion() {
+      socket.emit('adminCloseQuestion');
+    }
+
+    socket.on('updatePlayerCount', (count) => {
+      document.getElementById('playerCount').innerText = count;
+    });
+
+    socket.on('newQuestion', (q) => {
+      document.getElementById('hostQuestionDisplay').innerHTML = `
+        <h2>ข้อที่ ${q.questionIndex}: ${q.question}</h2>
+        <p>เวลา: ${q.timeLimit} วินาที</p>
+        <ul>
+          ${q.options.map(opt => `<li>${opt}</li>`).join('')}
+        </ul>
+      `;
+    });
+
+    socket.on('updateLeaderboard', (topPlayers) => {
+      const list = document.getElementById('leaderboardList');
+      list.innerHTML = topPlayers.map(p => `<li>${p.name}: <b>${p.score}</b> คะแนน</li>`).join('');
+    });
+  </script>
+</body>
+</html>
