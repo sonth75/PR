@@ -6,88 +6,73 @@
   <title>Brand Speed Master - Player</title>
   <script src="/socket.io/socket.io.js"></script>
   <style>
-    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #121212; color: #fff; text-align: center; margin: 0; padding: 20px; }
-    .card { background: #1e1e1e; padding: 20px; border-radius: 12px; max-width: 400px; margin: 0 auto; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
-    input, button { width: 100%; padding: 12px; margin: 8px 0; border-radius: 8px; border: none; font-size: 16px; box-sizing: border-box; }
-    button { background: #ff4757; color: white; font-weight: bold; cursor: pointer; }
-    button:disabled { background: #555; }
-    .option-btn { background: #2ed573; margin: 10px 0; font-size: 18px; }
-    .option-btn:nth-child(2) { background: #1e90ff; }
-    .option-btn:nth-child(3) { background: #ffa500; }
-    .option-btn:nth-child(4) { background: #9b59b6; }
-    #questionImg { max-width: 100%; height: auto; border-radius: 8px; margin: 10px 0; }
-    .hidden { display: none; }
+    * { box-sizing: border-box; }
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0f172a; color: #fff; text-align: center; margin: 0; padding: 20px; }
+    .card { background: #1e293b; padding: 24px; border-radius: 16px; max-width: 420px; margin: 0 auto; box-shadow: 0 8px 24px rgba(0,0,0,0.4); border: 1px solid #334155; }
+    input, button { width: 100%; padding: 14px; margin: 10px 0; border-radius: 10px; border: none; font-size: 16px; font-weight: bold; }
+    input { background: #334155; color: #fff; text-align: center; }
+    input::placeholder { color: #94a3b8; }
+    button { background: #ef4444; color: white; cursor: pointer; transition: 0.2s; }
+    button:active { transform: scale(0.98); }
+    .option-btn { margin: 8px 0; font-size: 18px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.2); }
+    .option-btn:nth-child(1) { background: #ef4444; }
+    .option-btn:nth-child(2) { background: #3b82f6; }
+    .option-btn:nth-child(3) { background: #eab308; color: #000; }
+    .option-btn:nth-child(4) { background: #22c55e; }
+    #questionImg { max-width: 100%; height: auto; border-radius: 10px; margin: 12px 0; border: 2px solid #475569; }
+    .hidden { display: none !important; }
+    .badge { background: #3b82f6; padding: 4px 12px; border-radius: 20px; font-size: 14px; font-weight: normal; }
   </style>
 </head>
 <body>
   <div class="card">
     <h2>⚡ Brand Speed Master</h2>
 
-    <!-- หน้า Login -->
+    <!-- Login -->
     <div id="loginSection">
-      <input type="text" id="username" placeholder="ใส่ชื่อเล่นของคุณ..." maxlength="15">
+      <p style="color: #94a3b8;">ใส่ชื่อเล่นเพื่อเข้าร่วมเกม</p>
+      <input type="text" id="username" placeholder="เช่น ช่างภาพ01" maxlength="15">
       <button onclick="join()">เข้าร่วมเกม</button>
     </div>
 
-    <!-- หน้า รอเริ่มเกม -->
+    <!-- Waiting Room -->
     <div id="waitSection" class="hidden">
-      <h3>ยินดีต้อนรับ <span id="displayName"></span>!</h3>
-      <p>รอมอบหมายคำถามจาก Host...</p>
-      <p>คะแนนปัจจุบัน: <b id="myScore">0</b></p>
+      <p class="badge">ห้องรอเล่นเกม</p>
+      <h3>ยินดีต้อนรับคุณ <span id="displayName" style="color: #38bdf8;"></span>!</h3>
+      <p style="color: #94a3b8;">กำลังรอ Host เปิดคำถามข้อต่อไป...</p>
+      <hr style="border-color: #334155; margin: 20px 0;">
+      <p>คะแนนสะสมของคุณ: <b id="myScore" style="color: #4ade80; font-size: 24px;">0</b></p>
     </div>
 
-    <!-- หน้า คำถาม -->
+    <!-- Question View -->
     <div id="gameSection" class="hidden">
-      <h4 id="qTitle">ข้อที่ 1</h4>
-      <p id="qText" style="font-size: 18px; font-weight: bold;"></p>
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <span class="badge" id="qBadge">ข้อที่ 1/10</span>
+        <span id="timerText" style="color: #f43f5e; font-weight: bold;"></span>
+      </div>
+      <h3 id="qText" style="margin: 16px 0; font-size: 20px;"></h3>
       <img id="questionImg" src="" class="hidden">
       <div id="optionsContainer"></div>
     </div>
 
-    <!-- หน้า แสดงผลลัพธ์ประจำข้อ -->
+    <!-- Result View -->
     <div id="resultSection" class="hidden">
       <h3 id="resultMsg"></h3>
-      <p>คะแนนรวมสะสม: <b id="totalScoreText">0</b></p>
+      <p id="correctAnswerText" style="color: #94a3b8;"></p>
+      <hr style="border-color: #334155; margin: 20px 0;">
+      <p>คะแนนรวมสะสม: <b id="totalScoreText" style="color: #4ade80; font-size: 24px;">0</b></p>
     </div>
   </div>
 
   <script>
     const socket = io();
-    let myData = {};
-    let currentTimer = null; // เพิ่มตัวแปรเก็บ Timer
-    
+    let myData = { score: 0, answeredCurrentQuestion: false };
+
     function join() {
       const name = document.getElementById('username').value.trim();
       if (name) socket.emit('joinGame', name);
     }
-      // ฟังก์ชันส่วนกลางสำหรับการปิดข้อ
-    function closeQuestionLogic() {
-      if (!isQuestionActive) return;
-      isQuestionActive = false;
 
-    const currentQ = questions[currentQuestionIndex];
-    
-    // ส่งสัญญาณบอกผู้เล่นทุกคนว่าปิดข้อนี้แล้ว พร้อมส่งเฉลย
-    io.emit('questionClosed', { 
-      correctAnswer: currentQ.answer, 
-      leaderboard: getLeaderboard() 
-    });
-  }
-    // เพิ่ม Event Listener รับสัญญาณรีเซ็ตเกม
-      socket.on('gameReset', () => {
-        // รีเซ็ตข้อมูลฝั่ง Client
-        myData.score = 0;
-        myData.answeredCurrentQuestion = false;
-      
-        // ซ่อนหน้าจอคำถาม/ผลลัพธ์ แล้วกลับไปแสดงหน้ารอเริ่มเกม (Waiting Room)
-        document.getElementById('gameSection').classList.add('hidden');
-        document.getElementById('resultSection').classList.add('hidden');
-        document.getElementById('waitingSection').classList.remove('hidden');
-      
-        // แจ้งเตือนผู้เล่น
-        alert('🔄 Host ได้ทำการ Reset เกมแล้ว เตรียมพร้อมสำหรับรอบใหม่!');
-      });
-    
     socket.on('joinedSuccess', (player) => {
       myData = player;
       document.getElementById('displayName').innerText = player.name;
@@ -95,12 +80,15 @@
       document.getElementById('waitSection').classList.remove('hidden');
     });
 
+    socket.on('errorMsg', (msg) => { alert(msg); });
+
     socket.on('newQuestion', (q) => {
+      myData.answeredCurrentQuestion = false;
       document.getElementById('waitSection').classList.add('hidden');
       document.getElementById('resultSection').classList.add('hidden');
       document.getElementById('gameSection').classList.remove('hidden');
 
-      document.getElementById('qTitle').innerText = `ข้อที่ ${q.questionIndex} / ${q.totalQuestions}`;
+      document.getElementById('qBadge').innerText = `ข้อที่ ${q.questionIndex} /${q.totalQuestions}`;
       document.getElementById('qText').innerText = q.question;
 
       const img = document.getElementById('questionImg');
@@ -118,84 +106,52 @@
         btn.className = 'option-btn';
         btn.innerText = opt;
         btn.onclick = () => {
-          socket.emit('submitAnswer', idx);
-          container.innerHTML = '<p>ส่งคำตอบแล้ว! กำลังรอหมดเวลา...</p>';
+          if (!myData.answeredCurrentQuestion) {
+            myData.answeredCurrentQuestion = true;
+            socket.emit('submitAnswer', idx);
+            container.innerHTML = '<p style="color:#38bdf8; margin-top:20px;">✅ ส่งคำตอบแล้ว! กำลังรอสรุปผล...</p>';
+          }
         };
         container.appendChild(btn);
       });
     });
-  // เพิ่ม Event Listener นี้ใน index.html
-    socket.on('questionClosed', (data) => {
-      document.getElementById('gameSection').classList.add('hidden');
-      document.getElementById('resultSection').classList.remove('hidden');
-    
-      // ถ้าผู้เล่นยังไม่ได้ตอบคำถามข้อนี้
-      if (!myData.answeredCurrentQuestion) {
-        document.getElementById('resultMsg').innerText = '⏰ หมดเวลา! คุณไม่ได้ส่งคำตอบ';
-        document.getElementById('resultMsg').style.color = '#ff4757';
-      }
-    });
-    // เมื่อ Host กดเปิดคำถามข้อต่อไป
-  socket.on('adminNextQuestion', () => {
-    currentQuestionIndex++;
-    if (currentQuestionIndex < questions.length) {
-      const q = questions[currentQuestionIndex];
-      
-      // Reset สถานะผู้เล่น
-      Object.keys(players).forEach(id => {
-        players[id].answeredCurrentQuestion = false;
-      });
-
-      questionStartTime = Date.now();
-      isQuestionActive = true;
-
-      // ล้าง Timer เก่า (ถ้ามี)
-      if (currentTimer) clearTimeout(currentTimer);
-
-      // ส่งคำถามให้ทุกคน
-      io.emit('newQuestion', {
-        questionIndex: currentQuestionIndex + 1,
-        totalQuestions: questions.length,
-        question: q.question,
-        hint: q.hint,
-        options: q.options,
-        timeLimit: q.timeLimit
-      });
-
-      // ตั้งเวลาปิดข้ออัตโนมัติเมื่อหมดเวลา (Auto-close)
-      currentTimer = setTimeout(() => {
-        closeQuestionLogic();
-      }, q.timeLimit * 1000);
-
-    } else {
-      io.emit('gameOver', getLeaderboard());
-    }
-  });
-
-  // เมื่อ Host กดปุ่ม "⏹ จบเวลาข้อนี้" เองด้วยมือ
-  socket.on('adminCloseQuestion', () => {
-    if (currentTimer) clearTimeout(currentTimer); // ยกเลิกเวลาถอยหลัง
-    closeQuestionLogic();
-  });
 
     socket.on('answerResult', (res) => {
+      myData.score = res.totalScore;
       document.getElementById('gameSection').classList.add('hidden');
       document.getElementById('resultSection').classList.remove('hidden');
-      
+
       const msg = document.getElementById('resultMsg');
       if (res.correct) {
         msg.innerText = `🎉 ถูกต้อง! (+${res.pointsAdded} คะแนน)`;
-        msg.style.color = '#2ed573';
+        msg.style.color = '#4ade80';
       } else {
-        msg.innerText = '❌ ตอบผิด หรือ ตอบไม่ทัน!';
-        msg.style.color = '#ff4757';
+        msg.innerText = '❌ ตอบผิด!';
+        msg.style.color = '#f43f5e';
       }
       document.getElementById('totalScoreText').innerText = res.totalScore;
       document.getElementById('myScore').innerText = res.totalScore;
     });
 
-    socket.on('gameOver', () => {
-      alert('จบการแข่งขันเรียบร้อยแล้ว!');
+    socket.on('questionClosed', (data) => {
+      document.getElementById('gameSection').classList.add('hidden');
+      document.getElementById('resultSection').classList.remove('hidden');
+
+      if (!myData.answeredCurrentQuestion) {
+        document.getElementById('resultMsg').innerText = '⏰ หมดเวลา! คุณไม่ได้ส่งคำตอบ';
+        document.getElementById('resultMsg').style.color = '#f43f5e';
+      }
+      document.getElementById('correctAnswerText').innerText = `เฉลย: ${data.correctOptionText}`;
+    });
+
+    socket.on('gameReset', () => {
+      myData.score = 0;
+      myData.answeredCurrentQuestion = false;
+      document.getElementById('myScore').innerText = '0';
+      document.getElementById('gameSection').classList.add('hidden');
+      document.getElementById('resultSection').classList.add('hidden');
+      document.getElementById('waitSection').classList.remove('hidden');
+      alert('🔄 Host ได้สั่ง Reset เริ่มเกมใหม่!');
     });
   </script>
 </body>
