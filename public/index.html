@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Brand Speed Master - Player</title>
+  <script src="/socket.io/socket.io.js"></script>
+  <style>
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #121212; color: #fff; text-align: center; margin: 0; padding: 20px; }
+    .card { background: #1e1e1e; padding: 20px; border-radius: 12px; max-width: 400px; margin: 0 auto; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
+    input, button { width: 100%; padding: 12px; margin: 8px 0; border-radius: 8px; border: none; font-size: 16px; box-sizing: border-box; }
+    button { background: #ff4757; color: white; font-weight: bold; cursor: pointer; }
+    button:disabled { background: #555; }
+    .option-btn { background: #2ed573; margin: 10px 0; font-size: 18px; }
+    .option-btn:nth-child(2) { background: #1e90ff; }
+    .option-btn:nth-child(3) { background: #ffa500; }
+    .option-btn:nth-child(4) { background: #9b59b6; }
+    #questionImg { max-width: 100%; height: auto; border-radius: 8px; margin: 10px 0; }
+    .hidden { display: none; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h2>⚡ Brand Speed Master</h2>
+
+    <!-- หน้า Login -->
+    <div id="loginSection">
+      <input type="text" id="username" placeholder="ใส่ชื่อเล่นของคุณ..." maxlength="15">
+      <button onclick="join()">เข้าร่วมเกม</button>
+    </div>
+
+    <!-- หน้า รอเริ่มเกม -->
+    <div id="waitSection" class="hidden">
+      <h3>ยินดีต้อนรับ <span id="displayName"></span>!</h3>
+      <p>รอมอบหมายคำถามจาก Host...</p>
+      <p>คะแนนปัจจุบัน: <b id="myScore">0</b></p>
+    </div>
+
+    <!-- หน้า คำถาม -->
+    <div id="gameSection" class="hidden">
+      <h4 id="qTitle">ข้อที่ 1</h4>
+      <p id="qText" style="font-size: 18px; font-weight: bold;"></p>
+      <img id="questionImg" src="" class="hidden">
+      <div id="optionsContainer"></div>
+    </div>
+
+    <!-- หน้า แสดงผลลัพธ์ประจำข้อ -->
+    <div id="resultSection" class="hidden">
+      <h3 id="resultMsg"></h3>
+      <p>คะแนนรวมสะสม: <b id="totalScoreText">0</b></p>
+    </div>
+  </div>
+
+  <script>
+    const socket = io();
+    let myData = {};
+
+    function join() {
+      const name = document.getElementById('username').value.trim();
+      if (name) socket.emit('joinGame', name);
+    }
+
+    socket.on('joinedSuccess', (player) => {
+      myData = player;
+      document.getElementById('displayName').innerText = player.name;
+      document.getElementById('loginSection').classList.add('hidden');
+      document.getElementById('waitSection').classList.remove('hidden');
+    });
+
+    socket.on('newQuestion', (q) => {
+      document.getElementById('waitSection').classList.add('hidden');
+      document.getElementById('resultSection').classList.add('hidden');
+      document.getElementById('gameSection').classList.remove('hidden');
+
+      document.getElementById('qTitle').innerText = `ข้อที่ ${q.questionIndex} / ${q.totalQuestions}`;
+      document.getElementById('qText').innerText = q.question;
+
+      const img = document.getElementById('questionImg');
+      if (q.hint) {
+        img.src = q.hint;
+        img.classList.remove('hidden');
+      } else {
+        img.classList.add('hidden');
+      }
+
+      const container = document.getElementById('optionsContainer');
+      container.innerHTML = '';
+      q.options.forEach((opt, idx) => {
+        const btn = document.createElement('button');
+        btn.className = 'option-btn';
+        btn.innerText = opt;
+        btn.onclick = () => {
+          socket.emit('submitAnswer', idx);
+          container.innerHTML = '<p>ส่งคำตอบแล้ว! กำลังรอหมดเวลา...</p>';
+        };
+        container.appendChild(btn);
+      });
+    });
+
+    socket.on('answerResult', (res) => {
+      document.getElementById('gameSection').classList.add('hidden');
+      document.getElementById('resultSection').classList.remove('hidden');
+      
+      const msg = document.getElementById('resultMsg');
+      if (res.correct) {
+        msg.innerText = `🎉 ถูกต้อง! (+${res.pointsAdded} คะแนน)`;
+        msg.style.color = '#2ed573';
+      } else {
+        msg.innerText = '❌ ตอบผิด หรือ ตอบไม่ทัน!';
+        msg.style.color = '#ff4757';
+      }
+      document.getElementById('totalScoreText').innerText = res.totalScore;
+      document.getElementById('myScore').innerText = res.totalScore;
+    });
+
+    socket.on('gameOver', () => {
+      alert('จบการแข่งขันเรียบร้อยแล้ว!');
+    });
+  </script>
+</body>
+</html>
