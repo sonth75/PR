@@ -2,110 +2,163 @@
 <html lang="th">
 <head>
   <meta charset="UTF-8">
-  <title>Host Dashboard - Brand Speed Master</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GLO Speed Master - Admin Controller</title>
   <script src="/socket.io/socket.io.js"></script>
+  <!-- โหลด Library สำหรับสร้าง QR Code -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <style>
-    * { box-sizing: border-box; }
-    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0f172a; color: #fff; padding: 24px; margin: 0; }
-    h1 { margin-top: 0; color: #38bdf8; }
-    .container { display: flex; gap: 24px; }
-    .main-panel { flex: 2; background: #1e293b; padding: 24px; border-radius: 12px; border: 1px solid #334155; }
-    .side-panel { flex: 1; background: #1e293b; padding: 24px; border-radius: 12px; border: 1px solid #334155; }
-    button { padding: 14px 20px; font-size: 16px; font-weight: bold; border: none; border-radius: 8px; cursor: pointer; margin-right: 10px; margin-bottom: 10px; transition: 0.2s; }
-    button:hover { opacity: 0.9; }
-    .btn-next { background: #3b82f6; color: white; }
-    .btn-auto { background: #10b981; color: white; }
-    .btn-stop { background: #f59e0b; color: white; }
-    .btn-close { background: #ef4444; color: white; }
-    .btn-reset { background: #64748b; color: white; }
-    ol { font-size: 18px; line-height: 1.8; padding-left: 24px; }
-    li { margin-bottom: 8px; }
-    .badge-count { background: #22c55e; color: #000; padding: 4px 12px; border-radius: 20px; font-weight: bold; }
-    .auto-badge { background: #10b981; color: #fff; padding: 4px 10px; border-radius: 6px; font-size: 14px; margin-left: 10px; }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Kanit', sans-serif; }
+    body { background: #090d16; color: #f8fafc; padding: 20px; }
+    .container { max-width: 900px; margin: 0 auto; background: #1e293b; padding: 25px; border-radius: 16px; border: 1px solid #38bdf8; }
+    h1 { color: #38bdf8; margin-bottom: 20px; font-size: 24px; text-align: center; }
+    
+    .admin-grid { display: grid; grid-template-columns: 280px 1fr; gap: 20px; margin-bottom: 20px; }
+    
+    /* กล่อง QR Code สำหรับสแกนเข้าเล่น */
+    .qr-card { background: #0f172a; padding: 20px; border-radius: 12px; text-align: center; border: 1px solid #334155; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+    .qr-card h3 { color: #38bdf8; font-size: 16px; margin-bottom: 12px; }
+    #qrcode { background: #ffffff; padding: 12px; border-radius: 8px; margin-bottom: 12px; display: inline-block; }
+    .url-text { font-size: 12px; color: #94a3b8; word-break: break-all; background: #1e293b; padding: 6px 10px; border-radius: 6px; width: 100%; }
+
+    .control-panel { background: #0f172a; padding: 20px; border-radius: 12px; border: 1px solid #334155; }
+    label { font-weight: bold; display: block; margin-bottom: 8px; color: #38bdf8; }
+    select { width: 100%; padding: 12px; border-radius: 8px; background: #1e293b; color: white; border: 1px solid #475569; font-size: 16px; margin-bottom: 15px; }
+    .btn-group { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; }
+    button { padding: 12px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; color: white; }
+    .btn-next { background: #0284c7; }
+    .btn-auto { background: #d97706; }
+    .btn-reset { background: #dc2626; }
+    .status-box { background: #334155; padding: 15px; border-radius: 8px; margin-top: 15px; }
+    .lb-table { width: 100%; margin-top: 10px; border-collapse: collapse; }
+    .lb-table th, .lb-table td { padding: 10px; text-align: left; border-bottom: 1px solid #475569; }
+
+    @media (max-width: 768px) {
+      .admin-grid { grid-template-columns: 1fr; }
+    }
   </style>
 </head>
 <body>
-  <h1>🎬 Host Dashboard <span id="autoIndicator" class="auto-badge hidden">🤖 Auto Mode Running</span></h1>
-  <p>จำนวนผู้เล่นปัจจุบัน: <span class="badge-count" id="playerCount">0</span> / 100 คน</p>
 
   <div class="container">
-    <div class="main-panel">
-      <div>
-        <button class="btn-auto" onclick="startAuto()">▶️ เริ่มโหมดอัตโนมัติ (Auto)</button>
-        <button class="btn-stop" onclick="stopAuto()">⏸️ หยุดโหมด Auto</button>
-        <hr style="border-color: #334155; margin: 15px 0;">
-        <button class="btn-next" onclick="nextQuestion()">▶️ เปิดคำถามถัดไป (Manual)</button>
-        <button class="btn-close" onclick="closeQuestion()">⏹ จบเวลาข้อนี้</button>
-        <button class="btn-reset" onclick="resetGame()">🔄 Reset เริ่มเกมใหม่</button>
+    <h1>🎛️ GLO ADMIN GAME CONTROLLER</h1>
+
+    <div class="admin-grid">
+      <!-- ส่วนแสดง QR Code สำหรับผู้เล่น -->
+      <div class="qr-card">
+        <h3>📲 สแกนเพื่อเข้าเล่นเกม</h3>
+        <div id="qrcode"></div>
+        <div class="url-text" id="playerUrlText">กำลังโหลด URL...</div>
       </div>
 
-      <div id="hostQuestionDisplay" style="margin-top: 24px; padding: 20px; background: #0f172a; border-radius: 8px;">
-        <h3>กด "เริ่มโหมดอัตโนมัติ" หรือ "เปิดคำถามถัดไป" เพื่อเริ่มเกม</h3>
+      <!-- ส่วนควบคุมเกม -->
+      <div class="control-panel">
+        <label for="questionSetSelect">📚 เลือกชุดคำถามที่จะใช้เล่น:</label>
+        <select id="questionSetSelect" onchange="selectQuestionSet()"></select>
+
+        <div class="btn-group">
+          <button class="btn-next" onclick="nextQuestion()">▶ ถัดไป</button>
+          <button class="btn-auto" id="autoBtn" onclick="toggleAuto()">🔄 โหมดออโต้</button>
+          <button class="btn-reset" onclick="resetScores()">💥 รีเซ็ตเกม</button>
+        </div>
+
+        <div class="status-box">
+          <p><b>ชุดคำถามปัจจุบัน:</b> <span id="currentSetName" style="color: #38bdf8;">-</span></p>
+          <p><b>สถานะคำถาม:</b> <span id="currentQText" style="color: #4ade80;">รอเริ่มเกม</span></p>
+          <p><b>เวลาที่เหลือ:</b> <span id="timerText" style="color: #f59e0b;">-</span> วินาที</p>
+        </div>
       </div>
     </div>
 
-    <div class="side-panel">
-      <h2>🏆 Leaderboard Top 10</h2>
-      <ol id="leaderboardList"></ol>
-    </div>
+    <h2>🏆 ตารางอันดับผู้เล่นสด (Live Leaderboard)</h2>
+    <table class="lb-table">
+      <thead>
+        <tr>
+          <th>อันดับ</th>
+          <th>ชื่อผู้เล่น</th>
+          <th>คะแนน</th>
+        </tr>
+      </thead>
+      <tbody id="adminLeaderboard"></tbody>
+    </table>
   </div>
 
   <script>
     const socket = io();
+    let isAuto = false;
 
-    function startAuto() {
-      socket.emit('adminStartAuto');
+    // สร้าง URL สำหรับหน้าผู้เล่น (อิงตาม Domain/IP และ Port ปัจจุบัน)
+    const playerUrl = `${window.location.protocol}//${window.location.host}/`;
+    document.getElementById('playerUrlText').innerText = playerUrl;
+
+    // สร้าง QR Code อัตโนมัติ
+    new QRCode(document.getElementById("qrcode"), {
+      text: playerUrl,
+      width: 160,
+      height: 160,
+      colorDark: "#000000",
+      colorLight: "#ffffff",
+      correctLevel: QRCode.CorrectLevel.H
+    });
+
+    socket.on('initQuestionSets', (data) => {
+      const select = document.getElementById('questionSetSelect');
+      select.innerHTML = '';
+      data.sets.forEach(s => {
+        const opt = document.createElement('option');
+        opt.value = s.key;
+        opt.innerText = s.name;
+        if (s.key === data.activeKey) opt.selected = true;
+        select.appendChild(opt);
+      });
+      document.getElementById('currentSetName').innerText = select.options[select.selectedIndex].text;
+    });
+
+    function selectQuestionSet() {
+      const key = document.getElementById('questionSetSelect').value;
+      socket.emit('adminSelectSet', key);
     }
 
-    function stopAuto() {
-      socket.emit('adminStopAuto');
-    }
+    socket.on('questionSetChanged', (data) => {
+      document.getElementById('currentSetName').innerText = data.name;
+      document.getElementById('currentQText').innerText = `เปลี่ยนเป็นชุดคำถามใหม่แล้ว (${data.totalQuestions} ข้อ)`;
+    });
 
     function nextQuestion() {
       socket.emit('adminNextQuestion');
     }
 
-    function closeQuestion() {
-      socket.emit('adminCloseQuestion');
+    function toggleAuto() {
+      isAuto = !isAuto;
+      const btn = document.getElementById('autoBtn');
+      btn.innerText = isAuto ? '⏸️ ปิดออโต้' : '🔄 โหมดออโต้';
+      btn.style.background = isAuto ? '#16a34a' : '#d97706';
+      socket.emit('adminToggleAuto', isAuto);
     }
 
-    function resetGame() {
-      if (confirm('คุณแน่ใจหรือไม่ว่าต้องการ Reset คะแนนและเริ่มเกมใหม่ตั้งแต่ข้อแรก?')) {
-        socket.emit('adminResetGame');
-        document.getElementById('hostQuestionDisplay').innerHTML = '<h3>🔄 รีเซ็ตเกมเรียบร้อยแล้ว พร้อมสำหรับเริ่มรอบใหม่</h3>';
+    function resetScores() {
+      if (confirm('คุณต้องการรีเซ็ตคะแนนและเกมทั้งหมดใช่หรือไม่?')) {
+        socket.emit('adminResetScores');
       }
     }
 
-    socket.on('autoStatusChange', (isRunning) => {
-      const badge = document.getElementById('autoIndicator');
-      if (isRunning) badge.classList.remove('hidden');
-      else badge.classList.add('hidden');
+    socket.on('newQuestion', (data) => {
+      document.getElementById('currentQText').innerText = `ข้อ ${data.qIndex + 1}/${data.total}: ${data.question.question}`;
+      document.getElementById('timerText').innerText = data.timeRemaining;
     });
 
-    socket.on('updatePlayerCount', (count) => {
-      document.getElementById('playerCount').innerText = count;
+    socket.on('timerUpdate', (t) => {
+      document.getElementById('timerText').innerText = t;
     });
 
-    socket.on('newQuestion', (q) => {
-      document.getElementById('hostQuestionDisplay').innerHTML = `
-        <h2 style="color: #38bdf8;">ข้อที่ ${q.questionIndex}/${q.totalQuestions}: ${q.question}</h2>
-        <p>เวลาต่อข้อ: <b>${q.timeLimit} วินาที</b></p>
-        <ul>
-          ${q.options.map((opt, idx) => `<li>ตัวเลือก ${idx + 1}: ${opt}</li>`).join('')}
-        </ul>
-      `;
-    });
-
-    socket.on('questionClosed', (data) => {
-      document.getElementById('hostQuestionDisplay').innerHTML += `
-        <h3 style="color: #ef4444; margin-top: 20px;">⏹ ปิดการรับคำตอบข้อนี้แล้ว</h3>
-        <p style="color: #4ade80;">เฉลยข้อที่ถูกต้อง: <b>${data.correctOptionText}</b></p>
-      `;
-    });
-
-    socket.on('updateLeaderboard', (topPlayers) => {
-      const list = document.getElementById('leaderboardList');
-      list.innerHTML = topPlayers.map(p => `<li>${p.name}: <b style="color: #38bdf8;">${p.score}</b> คะแนน</li>`).join('');
+    socket.on('updateLeaderboard', (list) => {
+      const tbody = document.getElementById('adminLeaderboard');
+      tbody.innerHTML = '';
+      list.forEach((item, index) => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td>#${index + 1}</td><td>${item.name}</td><td><b>${item.score}</b></td>`;
+        tbody.appendChild(tr);
+      });
     });
   </script>
 </body>
