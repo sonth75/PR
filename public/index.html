@@ -6,210 +6,217 @@
   <title>Brand Speed Master - Player</title>
   <script src="/socket.io/socket.io.js"></script>
   <style>
-    * { box-sizing: border-box; }
-    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0f172a; color: #fff; text-align: center; margin: 0; padding: 20px; }
-    .card { background: #1e293b; padding: 24px; border-radius: 16px; max-width: 450px; margin: 0 auto; box-shadow: 0 8px 24px rgba(0,0,0,0.4); border: 1px solid #334155; }
-    input, button { width: 100%; padding: 14px; margin: 10px 0; border-radius: 10px; border: none; font-size: 16px; font-weight: bold; }
-    input { background: #334155; color: #fff; text-align: center; }
-    button { background: #ef4444; color: white; cursor: pointer; transition: 0.2s; }
-    .option-btn { margin: 8px 0; font-size: 18px; border-radius: 12px; }
-    .option-btn:nth-child(1) { background: #ef4444; }
-    .option-btn:nth-child(2) { background: #3b82f6; }
-    .option-btn:nth-child(3) { background: #eab308; color: #000; }
-    .option-btn:nth-child(4) { background: #22c55e; }
-    #questionImg { max-width: 100%; height: auto; border-radius: 10px; margin: 12px 0; border: 2px solid #475569; }
-    .hidden { display: none !important; }
-    .badge { background: #3b82f6; padding: 4px 12px; border-radius: 20px; font-size: 14px; }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Kanit', sans-serif, system-ui; }
+    body { background: #0f172a; color: #f8fafc; display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 15px; }
+    .card { background: #1e293b; border: 2px solid #38bdf8; border-radius: 16px; padding: 24px; width: 100%; max-width: 480px; box-shadow: 0 10px 25px rgba(56, 189, 248, 0.2); }
+    h1, h2 { text-align: center; color: #38bdf8; margin-bottom: 15px; }
+    input { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #475569; background: #0f172a; color: white; font-size: 16px; margin-bottom: 12px; }
+    button { width: 100%; padding: 12px; border-radius: 8px; border: none; background: #0284c7; color: white; font-size: 16px; font-weight: bold; cursor: pointer; transition: 0.2s; }
+    button:hover { background: #0369a1; }
     
-    /* สไตล์สำหรับตารางสรุปผล */
-    .ranking-table { width: 100%; border-collapse: collapse; margin-top: 16px; font-size: 15px; }
-    .ranking-table th { background: #334155; color: #38bdf8; padding: 10px; border-bottom: 2px solid #475569; }
-    .ranking-table td { padding: 10px; border-bottom: 1px solid #334155; }
-    .my-rank-row { background: #0284c7 !important; color: #ffffff !important; font-weight: bold; border-radius: 8px; font-size: 17px; }
-    .winner-row { color: #facc15; font-weight: bold; }
+    /* Options Grid */
+    .options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
+    .opt-btn { background: #334155; border: 2px solid #475569; padding: 12px; font-size: 15px; border-radius: 10px; cursor: pointer; color: white; text-align: center; display: flex; align-items: center; justify-content: center; min-height: 60px; transition: 0.2s; }
+    .opt-btn:hover { background: #475569; border-color: #38bdf8; }
+    
+    /* สไตล์เฉพาะสำหรับปุ่มที่เป็นรูปภาพ */
+    .opt-btn.img-opt { padding: 6px; background: #0f172a; }
+    .opt-btn.img-opt img { width: 100%; height: 100px; object-fit: contain; border-radius: 6px; }
+
+    .timer-bar { width: 100%; background: #334155; height: 10px; border-radius: 5px; overflow: hidden; margin: 15px 0; }
+    .timer-fill { background: #f59e0b; height: 100%; width: 100%; transition: width 1s linear; }
+    .hint-img { width: 100%; max-height: 200px; object-fit: contain; border-radius: 8px; margin-bottom: 10px; }
+    
+    /* สไตล์ Leaderboard */
+    .leaderboard-list { list-style: none; margin-top: 15px; }
+    .leaderboard-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; background: #334155; margin-bottom: 8px; border-radius: 8px; border: 1px solid transparent; font-size: 15px; }
+    
+    /* ไฮไลต์อันดับ 1 */
+    .leaderboard-item.rank-1 { background: linear-gradient(90deg, #78350f, #334155); border-color: #f59e0b; font-weight: bold; }
+    .leaderboard-item.rank-1 .rank-num { color: #fbbf24; font-size: 18px; }
+    
+    /* ไฮไลต์ผู้เล่นคนปัจจุบัน */
+    .leaderboard-item.my-rank { border: 2px solid #38bdf8; background: #0284c7; font-weight: bold; box-shadow: 0 0 10px rgba(56, 189, 248, 0.4); }
+    .leaderboard-item.my-rank .my-tag { font-size: 11px; background: #38bdf8; color: #0f172a; padding: 2px 6px; border-radius: 4px; margin-left: 6px; font-weight: bold; }
+
+    .rank-num { font-weight: bold; width: 45px; display: inline-block; color: #94a3b8; }
+    .player-name { flex-grow: 1; text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .score-val { color: #38bdf8; font-weight: bold; }
+    .rank-1 .score-val { color: #fbbf24; }
+    .my-rank .score-val { color: #ffffff; }
+    
+    .hidden { display: none; }
   </style>
 </head>
 <body>
+
   <div class="card">
-    <h2>⚡ Brand Speed Master</h2>
-
-    <!-- Login -->
-    <div id="loginSection">
-      <p style="color: #94a3b8;">ใส่ชื่อเล่นเพื่อเข้าร่วมเกม</p>
-      <input type="text" id="username" placeholder="เช่น ช่างภาพ01" maxlength="15">
-      <button onclick="join()">เข้าร่วมเกม</button>
+    <!-- หน้าลงชื่อเข้าเล่น -->
+    <div id="joinSection">
+      <h1>⚡ BRAND SPEED MASTER</h1>
+      <p style="text-align: center; color: #94a3b8; margin-bottom: 20px;">ใส่นามแฝงเพื่อเข้าร่วมการแข่งขัน</p>
+      <input type="text" id="usernameInput" placeholder="พิมพ์ชื่อของคุณที่นี่..." maxlength="15">
+      <button onclick="joinGame()">เข้าสู่เกม</button>
     </div>
 
-    <!-- Waiting Room -->
-    <div id="waitSection" class="hidden">
-      <p class="badge">ห้องรอเล่นเกม</p>
-      <h3>ยินดีต้อนรับคุณ <span id="displayName" style="color: #38bdf8;"></span>!</h3>
-      <p style="color: #94a3b8;">กำลังรอ Host เปิดคำถามข้อต่อไป...</p>
-      <hr style="border-color: #334155; margin: 20px 0;">
-      <p>คะแนนสะสมของคุณ: <b id="myScore" style="color: #4ade80; font-size: 24px;">0</b></p>
+    <!-- หน้าจอรอนับถอยหลัง -->
+    <div id="waitSection" class="hidden" style="text-align: center;">
+      <h2 id="playerNameDisplay">สวัสดีคุณ!</h2>
+      <p style="color: #94a3b8; margin-top: 10px;">🎮 รอ Host เริ่มรันคำถาม...</p>
     </div>
 
-    <!-- Question View -->
+    <!-- หน้าคำถาม -->
     <div id="gameSection" class="hidden">
-      <div style="display: flex; justify-content: space-between; align-items: center;">
-        <span class="badge" id="qBadge">ข้อที่ 1/10</span>
+      <div style="display: flex; justify-content: space-between; color: #94a3b8; font-size: 14px;">
+        <span id="qCategory">ประเภท</span>
+        <span id="qProgress">ข้อ 1/10</span>
       </div>
-      <h3 id="qText" style="margin: 16px 0; font-size: 20px;"></h3>
-      <img id="questionImg" src="" class="hidden">
-      <div id="optionsContainer"></div>
+
+      <div class="timer-bar"><div id="timerFill" class="timer-fill"></div></div>
+      
+      <h2 id="questionText" style="font-size: 18px; text-align: left; color: #f8fafc;">คำถามจะปรากฏที่นี่</h2>
+      <img id="hintImg" class="hint-img hidden" src="" alt="Hint">
+
+      <div id="optionsContainer" class="options-grid"></div>
+      <p id="statusMsg" style="text-align: center; margin-top: 15px; font-weight: bold;"></p>
     </div>
 
-    <!-- Result View -->
-    <div id="resultSection" class="hidden">
-      <h3 id="resultMsg"></h3>
-      <p id="correctAnswerText" style="color: #94a3b8;"></p>
-      <hr style="border-color: #334155; margin: 20px 0;">
-      <p>คะแนนรวมสะสม: <b id="totalScoreText" style="color: #4ade80; font-size: 24px;">0</b></p>
-    </div>
-
-    <!-- Game Over & Full Leaderboard View -->
-    <div id="gameOverSection" class="hidden">
-      <h2 style="color: #facc15;">🏁 จบการแข่งขัน!</h2>
-      <p style="color: #94a3b8;">ตารางสรุปอันดับผู้เล่นทั้งหมด</p>
-      <div style="max-height: 320px; overflow-y: auto;">
-        <table class="ranking-table">
-          <thead>
-            <tr>
-              <th>อันดับ</th>
-              <th>ชื่อผู้เล่น</th>
-              <th>คะแนน</th>
-            </tr>
-          </thead>
-          <tbody id="fullRankingBody"></tbody>
-        </table>
-      </div>
+    <!-- หน้าสรุปผลคะแนน Leaderboard -->
+    <div id="leaderboardSection" class="hidden">
+      <h2>🏆 ตารางคะแนนสูงสุด</h2>
+      <ul id="leaderboardList" class="leaderboard-list"></ul>
     </div>
   </div>
 
   <script>
     const socket = io();
-    let myData = { id: '', name: '', score: 0, answeredCurrentQuestion: false };
+    let myPlayer = null;
+    let currentTimeLimit = 10;
 
-    function join() {
-      const name = document.getElementById('username').value.trim();
-      if (name) socket.emit('joinGame', name);
+    function joinGame() {
+      const name = document.getElementById('usernameInput').value.trim();
+      if (name) {
+        socket.emit('joinGame', name);
+      }
     }
 
     socket.on('joinedSuccess', (player) => {
-      myData = player;
-      document.getElementById('displayName').innerText = player.name;
-      document.getElementById('loginSection').classList.add('hidden');
+      myPlayer = player;
+      document.getElementById('playerNameDisplay').innerText = `ผู้เล่น: ${player.name}`;
+      document.getElementById('joinSection').classList.add('hidden');
       document.getElementById('waitSection').classList.remove('hidden');
     });
 
-    socket.on('errorMsg', (msg) => { alert(msg); });
-
-    socket.on('newQuestion', (q) => {
-      myData.answeredCurrentQuestion = false;
+    socket.on('newQuestion', (data) => {
       document.getElementById('waitSection').classList.add('hidden');
-      document.getElementById('resultSection').classList.add('hidden');
-      document.getElementById('gameOverSection').classList.add('hidden');
       document.getElementById('gameSection').classList.remove('hidden');
+      document.getElementById('statusMsg').innerText = '';
 
-      document.getElementById('qBadge').innerText = `ข้อที่ ${q.questionIndex} / ${q.totalQuestions}`;
-      document.getElementById('qText').innerText = q.question;
+      document.getElementById('qProgress').innerText = `ข้อ ${data.qIndex + 1}/${data.total}`;
+      document.getElementById('qCategory').innerText = data.question.type;
+      document.getElementById('questionText').innerText = data.question.question;
 
-      const img = document.getElementById('questionImg');
-      if (q.hint) {
-        img.src = q.hint;
-        img.classList.remove('hidden');
+      // แสดงรูปภาพคำใบ้ (ถ้ามี)
+      const hintImg = document.getElementById('hintImg');
+      if (data.question.hint) {
+        hintImg.src = data.question.hint;
+        hintImg.classList.remove('hidden');
       } else {
-        img.classList.add('hidden');
+        hintImg.classList.add('hidden');
       }
 
-      const container = document.getElementById('optionsContainer');
-      container.innerHTML = '';
-      q.options.forEach((opt, idx) => {
+      // สร้างตัวเลือกคำตอบ (แยกเคส ข้อความ หรือ รูปภาพ)
+      const optionsContainer = document.getElementById('optionsContainer');
+      optionsContainer.innerHTML = '';
+      
+      data.question.options.forEach((opt, idx) => {
         const btn = document.createElement('button');
-        btn.className = 'option-btn';
-        btn.innerText = opt;
-        btn.onclick = () => {
-          if (!myData.answeredCurrentQuestion) {
-            myData.answeredCurrentQuestion = true;
-            socket.emit('submitAnswer', idx);
-            container.innerHTML = '<p style="color:#38bdf8; margin-top:20px;">✅ ส่งคำตอบแล้ว! กำลังรอสรุปผล...</p>';
-          }
-        };
-        container.appendChild(btn);
-      });
-    });
-
-    socket.on('answerResult', (res) => {
-      myData.score = res.totalScore;
-      document.getElementById('gameSection').classList.add('hidden');
-      document.getElementById('resultSection').classList.remove('hidden');
-
-      const msg = document.getElementById('resultMsg');
-      if (res.correct) {
-        msg.innerText = `🎉 ถูกต้อง! (+${res.pointsAdded} คะแนน)`;
-        msg.style.color = '#4ade80';
-      } else {
-        msg.innerText = '❌ ตอบผิด!';
-        msg.style.color = '#f43f5e';
-      }
-      document.getElementById('totalScoreText').innerText = res.totalScore;
-      document.getElementById('myScore').innerText = res.totalScore;
-    });
-
-    socket.on('questionClosed', (data) => {
-      document.getElementById('gameSection').classList.add('hidden');
-      document.getElementById('resultSection').classList.remove('hidden');
-
-      if (!myData.answeredCurrentQuestion) {
-        document.getElementById('resultMsg').innerText = '⏰ หมดเวลา! คุณไม่ได้ส่งคำตอบ';
-        document.getElementById('resultMsg').style.color = '#f43f5e';
-      }
-      document.getElementById('correctAnswerText').innerText = `เฉลย: ${data.correctOptionText}`;
-    });
-
-    // เมื่อจบเกม แสดงสรุปอันดับผู้เล่นทั้งหมด
-    socket.on('gameOver', (allPlayers) => {
-      document.getElementById('gameSection').classList.add('hidden');
-      document.getElementById('resultSection').classList.add('hidden');
-      document.getElementById('waitSection').classList.add('hidden');
-      document.getElementById('gameOverSection').classList.remove('hidden');
-
-      const tbody = document.getElementById('fullRankingBody');
-      tbody.innerHTML = '';
-
-      allPlayers.forEach((p, index) => {
-        const tr = document.createElement('tr');
-        const isMe = p.id === myData.id;
-        const isWinner = index === 0;
-
-        // ทำตัวหนาและเปลี่ยนสีหากเป็นแถบของตัวเอง
-        if (isMe) {
-          tr.className = 'my-rank-row';
-        } else if (isWinner) {
-          tr.className = 'winner-row';
+        
+        if (data.question.optionType === 'image') {
+          btn.className = 'opt-btn img-opt';
+          btn.innerHTML = `<img src="${opt}" alt="Option ${idx + 1}">`;
+        } else {
+          btn.className = 'opt-btn';
+          btn.innerText = opt;
         }
 
-        const rankDisplay = isWinner ? '🏆 1' : index + 1;
-        const nameDisplay = isMe ? `<b>${p.name} (คุณ)</b>` : p.name;
+        btn.onclick = () => submitAnswer(idx, btn);
+        optionsContainer.appendChild(btn);
+      });
 
-        tr.innerHTML = `
-          <td>${rankDisplay}</td>
-          <td>${nameDisplay}</td>
-          <td><b>${p.score}</b></td>
+      currentTimeLimit = data.question.timeLimit;
+    });
+
+    function submitAnswer(idx, btnElement) {
+      socket.emit('submitAnswer', { answerIndex: idx });
+      
+      // ปิดปุ่มตอบทั้งหมดชั่วคราว
+      const btns = document.querySelectorAll('.opt-btn');
+      btns.forEach(b => b.disabled = true);
+      btnElement.style.borderColor = '#38bdf8';
+      btnElement.style.background = '#0284c7';
+      document.getElementById('statusMsg').innerText = 'ส่งคำตอบแล้ว รอสรุปผล...';
+    }
+
+    socket.on('answerResult', (res) => {
+      const msg = document.getElementById('statusMsg');
+      if (res.correct) {
+        msg.innerText = `🎉 ถูกต้อง! (+${res.points} คะแนน)`;
+        msg.style.color = '#4ade80';
+      } else {
+        msg.innerText = `❌ คำตอบไม่ถูกต้อง`;
+        msg.style.color = '#f87171';
+      }
+    });
+
+    socket.on('timerUpdate', (timeLeft) => {
+      const fill = document.getElementById('timerFill');
+      const pct = (timeLeft / currentTimeLimit) * 100;
+      fill.style.width = `${pct}%`;
+    });
+
+    // อัปเดตตาราง Leaderboard พร้อมแสดงอันดับและไฮไลต์
+    socket.on('updateLeaderboard', (list) => {
+      const lbList = document.getElementById('leaderboardList');
+      lbList.innerHTML = '';
+
+      list.forEach((item, index) => {
+        const rank = index + 1;
+        const li = document.createElement('li');
+        
+        let rankClass = 'leaderboard-item';
+        let rankIcon = `#${rank}`;
+        let isMe = myPlayer && item.id === myPlayer.id;
+
+        if (rank === 1) {
+          rankClass += ' rank-1';
+          rankIcon = '🏆 #1';
+        }
+
+        if (isMe) {
+          rankClass += ' my-rank';
+        }
+
+        li.className = rankClass;
+        li.innerHTML = `
+          <span class="rank-num">${rankIcon}</span>
+          <span class="player-name">${item.name} ${isMe ? '<span class="my-tag">คุณ</span>' : ''}</span>
+          <span class="score-val">${item.score} pts</span>
         `;
-        tbody.appendChild(tr);
+        
+        lbList.appendChild(li);
       });
     });
 
-    socket.on('gameReset', () => {
-      myData.score = 0;
-      myData.answeredCurrentQuestion = false;
-      document.getElementById('myScore').innerText = '0';
+    socket.on('gameOver', () => {
       document.getElementById('gameSection').classList.add('hidden');
-      document.getElementById('resultSection').classList.add('hidden');
-      document.getElementById('gameOverSection').classList.add('hidden');
+      document.getElementById('leaderboardSection').classList.remove('hidden');
+    });
+
+    socket.on('resetClientState', () => {
+      document.getElementById('gameSection').classList.add('hidden');
+      document.getElementById('leaderboardSection').classList.add('hidden');
       document.getElementById('waitSection').classList.remove('hidden');
-      alert('🔄 Host ได้สั่ง Reset เริ่มเกมใหม่!');
     });
   </script>
 </body>
